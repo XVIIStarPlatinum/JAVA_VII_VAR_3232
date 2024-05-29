@@ -1,11 +1,11 @@
 # Threadmorber: if TCPlatinum could fly
 
-[![CodeFactor](https://www.codefactor.io/repository/github/xviistarplatinum/java_vii_var_153135/badge)](https://www.codefactor.io/repository/github/xviistarplatinum/java_vii_var_153135)
+[![CodeFactor](https://www.codefactor.io/repository/github/xviistarplatinum/java_vii_var_3232/badge)](https://www.codefactor.io/repository/github/xviistarplatinum/java_vii_var_3232)
 ___
 
 ## Лабораторная работа `#7`
 
-<p>
+<p align="center">
     <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNGM2enl5ajNuczh2cjNjdzlmZ2tzM2VxNXk5a3lvYjZ3OXl0bmk4cyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/h9rBcBywX895S/giphy.gif"  alt="DB and Multithreading"/>
 </p>
 

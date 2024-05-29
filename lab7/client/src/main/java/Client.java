@@ -90,7 +90,12 @@ public class Client {
                 username = scanner.nextLine();
 
                 System.out.println("Введите пароль: ");
-                password = scanner.nextLine();
+                Console console = System.console();
+                if(console != null) {
+                    char[] symbols = console.readPassword();
+                    if(symbols == null) continue;
+                    password = String.valueOf(symbols);
+                } else password = scanner.nextLine();
 
                 user = new User(username, PasswordHasher.getHash(password));
 

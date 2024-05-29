@@ -14,7 +14,9 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ForkJoinPool;
-
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 public class Server {
     private InetSocketAddress address;
     private Selector selector;
@@ -23,12 +25,13 @@ public class Server {
     private volatile Response response;
     private Request request;
     protected static Logger logger;
-
+    private ReentrantLock locker;
     public Server(InetSocketAddress address) {
         this.address = address;
         this.consoleApp = createConsoleApp();
         logger = Logger.getLogger(Server.class.getName());
         this.forkJoinPool = ForkJoinPool.commonPool();
+        locker = new ReentrantLock();
     }
 
     public void run() {
@@ -68,10 +71,9 @@ public class Server {
                                 SocketChannel clientChannel = (SocketChannel) key.channel();
                                 clientChannel.configureBlocking(false);
 
-                                forkJoinPool.submit(() -> {
+                                Thread readThread = new Thread(() -> {
                                     try {
                                         readRequest(clientChannel, key);
-
                                     } catch (SocketException e) {
                                         logger.info("Клиент " + key.channel().toString() + " отключился.");
                                         key.cancel();
@@ -84,12 +86,12 @@ public class Server {
                                         e.printStackTrace();
                                         logger.log(Level.SEVERE, "Class cast ошибка.");
                                     }
+                                });
+                                readThread.start();
+                                readThread.join();
+                                forkJoinPool.submit(() -> {
+                                    processRequest();
                                 }).join();
-
-                                Thread processRequestThread = new Thread(this::processRequest);
-                                processRequestThread.start();
-                                processRequestThread.join();
-
                                 clientChannel.register(selector, SelectionKey.OP_WRITE);
                             }
 
@@ -97,7 +99,8 @@ public class Server {
                                 SocketChannel clientChannel = (SocketChannel) key.channel();
                                 clientChannel.configureBlocking(false);
 
-                                Thread sendThread = new Thread(() -> {
+                                ExecutorService executorService = Executors.newCachedThreadPool();
+                                executorService.submit(() -> {
                                     try {
                                         sendResponse(clientChannel);
 
@@ -110,9 +113,6 @@ public class Server {
                                         e.printStackTrace();
                                     }
                                 });
-                                sendThread.start();
-                                sendThread.join();
-
                                 clientChannel.register(selector, SelectionKey.OP_READ);
                             }
                         }
@@ -134,7 +134,8 @@ public class Server {
         }
     }
 
-    private synchronized void readRequest(SocketChannel clientChannel, SelectionKey key) throws IOException, ClassNotFoundException {
+    private void readRequest(SocketChannel clientChannel, SelectionKey key) throws IOException, ClassNotFoundException {
+        locker.lock();
         ByteBuffer clientData = ByteBuffer.allocate(2048);
 
         logger.info(clientChannel.read(clientData) + " байт пришло от клиента.");
@@ -142,10 +143,13 @@ public class Server {
             request = (Request) clientDataIn.readObject();
         } catch (StreamCorruptedException e) {
             key.cancel();
+        } finally {
+            locker.unlock();
         }
     }
 
-    private synchronized void processRequest() {
+    private void processRequest() {
+        locker.lock();
         if (request.getCommandName() == null) {
             var user = request.getUser();
 
@@ -190,9 +194,11 @@ public class Server {
 
             logger.info("Запрос:\n" + commandName + "\n" + commandStrArg + "\n" + commandObjArg + "\nУспешно обработан.");
         }
+        locker.unlock();
     }
 
-    private synchronized void sendResponse(SocketChannel clientChannel) throws IOException {
+    private void sendResponse(SocketChannel clientChannel) throws IOException {
+        locker.lock();
         try (ByteArrayOutputStream bytes = new ByteArrayOutputStream();
              ObjectOutputStream clientDataOut = new ObjectOutputStream(bytes)) {
             clientDataOut.writeObject(response);
@@ -219,6 +225,8 @@ public class Server {
             logger.info("Отправлен стоп пакет.\n");
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
+        } finally {
+            locker.unlock();
         }
     }
 
@@ -240,5 +248,4 @@ public class Server {
                 new FilterLessThanNumberOfParticipantsCommand(commandHandler)
         );
     }
-
 }
