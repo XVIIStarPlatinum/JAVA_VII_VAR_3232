@@ -1,9 +1,7 @@
 package Network;
 
-import lombok.Getter;
 import java.io.Serializable;
 
-@Getter
 public class Response implements Serializable {
     private String message;
     private String collectionToStr;

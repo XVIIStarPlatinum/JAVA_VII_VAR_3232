@@ -197,7 +197,7 @@ public class Client {
             out.flush();
         }
 
-        ByteBuffer dataToReceiveLength = ByteBuffer.allocate(8);
+        ByteBuffer dataToReceiveLength = ByteBuffer.allocate(16);
         channel.read(dataToReceiveLength); // читаем длину ответа от сервера
         dataToReceiveLength.flip();
         int responseLength = dataToReceiveLength.getInt(); // достаём её из буфера

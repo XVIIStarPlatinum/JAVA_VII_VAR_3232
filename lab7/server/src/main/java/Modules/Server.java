@@ -152,19 +152,23 @@ public class Server {
         locker.lock();
         if (request.getCommandName() == null) {
             var user = request.getUser();
-
+            System.out.println("User registration.");            
             if (!request.userRegisterRequired()) {
+                System.out.println(!request.userRegisterRequired());
+                System.out.println(DBProvider.checkUserExistence(user.getUsername()) + user.getUsername());
                 if (DBProvider.checkUserExistence(user.getUsername())) {
+                    System.out.println(DBProvider.checkUserPassword(user) + " " + user.getUsername() + " " + user.getPassword());
                     if (DBProvider.checkUserPassword(user)) {
                         response = new Response("Дарова, " + user.getUsername() + ".\n", true);
                         logger.info("Пользователь " + user.getUsername() + " успешно аутентифицирован.");
-
+                            
                     } else {
                         response = new Response("Пароль введён неверно.", false);
                         logger.info("Пользователь " + user.getUsername() + " неверно ввёл пароль.");
                     }
 
                 } else {
+                    System.out.println(user.getUsername() + request.userRegisterRequired());
                     response = new Response("Пользователя " + user.getUsername() + " не существует.", false);
                     logger.info("Пользователя " + user.getUsername() + " не существует.");
                 }

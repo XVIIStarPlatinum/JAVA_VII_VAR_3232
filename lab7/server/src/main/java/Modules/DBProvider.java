@@ -120,7 +120,6 @@ public class DBProvider {
         try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
             preparedStatement.setFloat(1, coordinates.getX());
             preparedStatement.setFloat(2, coordinates.getY());
-            preparedStatement.executeUpdate();
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
             return resultSet.getInt(1);
@@ -147,12 +146,11 @@ public class DBProvider {
     public static boolean addMusicBand(MusicBandRaw musicBandRaw){
 
         String query = "INSERT INTO MUSIC_BANDS (name, coordinates_fk, creation_date, number_of_participants, establishment_date, music_genre, studio_fk, owner_id)" +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, (SELECT id FROM user_TABLE WHERE username = ?))";
+                "VALUES (?, ?, ?, ?, ?, ?, ?, (SELECT id FROM USER_TABLE WHERE username = ?))";
 
         try (PreparedStatement p = connection.prepareStatement(query)){
             p.setString(1, musicBandRaw.getName());
-            p.setInt(2, addCoordinates(musicBandRaw.getCoordinates()));
-
+            int coordinates_id = addCoordinates(musicBandRaw.getCoordinates());
             long dateInMilliseconds = new Date().getTime();
             p.setTimestamp(3, new Timestamp(dateInMilliseconds));
             if(((Long) musicBandRaw.getNumberOfParticipants()).equals(null)) {
